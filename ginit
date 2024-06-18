@@ -21,6 +21,9 @@ crep(){
 		if [ "$ln" = "ERROR: Repository not found." ];then
 			echo "ERROR: Remote repository not found. \nPlease make the repository, '$target' and reexececute 'git push -u origin main' manually" >&2
 		fi
+		if [ "${ln:0:17}" = "ERROR: Permission" ];then
+			echo $ln
+		fi
 	done
 }
 
