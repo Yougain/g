@@ -1,8 +1,6 @@
 #!/bin/env bash
 
 
-
-
 PATH="./:$PATH"
 
 if ! source bashlib_y;then
@@ -161,7 +159,8 @@ function main(){
 		.git/.g-pre-commit
 	fi
 
-	if [ -z "`git diff`" ];then
+	CM=`git commit -a --dry-run`
+	if ! [[ $CM =~ \ (modified|new\ file):\  ]]; then
 		if ! git pull --no-edit; then
 			exit 1
 		fi
