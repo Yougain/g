@@ -2,6 +2,13 @@
 
 
 PWD=`pwd`
+if [ "$PWD" = "$HOME/g" ];then
+	mkdir -p "$HOME/git_project"
+	mv "$HOME/g" "$HOME/git_project"
+	cd "$HOME/git_project/g"
+	exec $0
+fi
+
 if [ "${PWD%/*}" != "$HOME/git_project" ];then
 	echo "FATAL: Current directory is not '~/git_project/${PWD##*/}'."
 	exit
