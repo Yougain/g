@@ -1,0 +1,54 @@
+#!/bin/env bash
+
+
+PWD=`pwd`
+if [ "${PWD%/*}" != "$HOME/git_project" ];then
+	echo "FATAL: Current directory is not '~/git_project/${PWD##*/}'."
+	exit
+fi
+
+
+if [ ! -e ~/git_project/bashlib_y ];then
+	mkdir -p ~/git_project/bashlib_y
+	if ! git clone https://github.com/Yougain/bashlib_y ~/git_project/bashlib_y; then
+		echo "FATAL: cannot git clone bashlib_y"
+		exit 1
+	fi
+	~/git_project/bashlib_y/binst
+fi
+
+
+if [ -d /data/data/com.termux/files ];then
+	PATH=/data/data/com.termux/files/usr/share/bashlib_y:$PATH
+else
+	PATH=/usr/share/bashlib_y:$PATH
+fi
+
+
+if ! source bashlib_y;then
+	echo "FATAL: cannot source bashlib_y"
+fi
+
+
+if [ -d /data/data/com.termux/files ];then
+	R=/data/data/com.termux/files
+	SUDO=
+else
+	R=
+	SUDO="sudo"
+fi
+
+
+$SUDO bash <<-END
+	for f in `ls`; do
+		if [ -x ./$f ]; then
+			if [ ! -e "$R/usr/bin/$f" ];then
+				ln -vs "$PWD/$f" $R/usr/bin
+			else
+				echo $R/usr/bin/$f already exists.
+			fi
+		fi
+	done
+END
+
+
