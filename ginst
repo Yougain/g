@@ -2,7 +2,7 @@
 
 
 PWD=`pwd`
-if [ "$PWD" = "$HOME/g" ];then
+if [ "$PWD" = "$HOME/g" -a ! -e "$HOME/git_project/g" ];then
 	mkdir -p "$HOME/git_project"
 	mv "$HOME/g" "$HOME/git_project"
 	cd "$HOME/git_project/g"
@@ -15,6 +15,11 @@ if [ "${PWD%/*}" != "$HOME/git_project" ];then
 fi
 
 
+if [ "$PWD" = "$HOME/git_project/bashlib_y" ];then
+	exec "./binst"
+fi
+
+
 if [ ! -e ~/git_project/bashlib_y ];then
 	mkdir -p ~/git_project/bashlib_y
 	if ! git clone https://github.com/Yougain/bashlib_y ~/git_project/bashlib_y; then
@@ -23,7 +28,7 @@ if [ ! -e ~/git_project/bashlib_y ];then
 	fi
 	pushd ~/git_project/bashlib_y > /dev/null
 	~/git_project/bashlib_y/binst
-	popd
+	popd > /dev/null
 fi
 
 
@@ -51,7 +56,7 @@ fi
 $SUDO bash <<-END
 	for f in \`ls\`; do
 		if [ -x ./\$f ]; then
-			if [ ! -e "$R/usr/bin/\$f" ];then
+			if [ ! -e "$R/usr/bin/\$f" -a ! -L "$R/usr/bin/\$f" ];then
 				ln -vs "$PWD/\$f" $R/usr/bin
 			else
 				echo $R/usr/bin/\$f already exists.
