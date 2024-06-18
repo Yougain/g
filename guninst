@@ -1,0 +1,42 @@
+#!/bin/env bash
+
+
+PWD=`pwd`
+
+
+if [ "$PWD" = "$HOME/git_project/bashlib_y" ];then
+	exec "./buninst"
+fi
+
+
+if [ "${PWD%/*}" != "$HOME/git_project" ];then
+	echo "FATAL: Current directory is not '~/git_project/${PWD##*/}'."
+	exit
+fi
+
+
+if [ -d /data/data/com.termux/files ];then
+	PATH=/data/data/com.termux/files/usr/share/bashlib_y:$PATH
+else
+	PATH=/usr/share/bashlib_y:$PATH
+fi
+
+
+if [ -d /data/data/com.termux/files ];then
+	R=/data/data/com.termux/files
+	SUDO=
+else
+	R=
+	SUDO="sudo"
+fi
+
+$SUDO bash <<-END
+	for f in \`ls\`; do
+		if [ -x ./\$f ]; then
+			if [ -L "$R/usr/bin/\$f" ];then
+				rm $R/usr/bin/\$f
+			fi
+		fi
+	done
+END
+

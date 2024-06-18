@@ -160,7 +160,7 @@ function main(){
 	fi
 
 	CM=`git commit -a --dry-run`
-	if ! [[ $CM =~ \ (modified|new\ file):\  ]]; then
+	if ! [[ $CM =~ (modified|new\ file):\  ]]; then
 		if ! git pull --no-edit; then
 			exit 1
 		fi
