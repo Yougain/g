@@ -21,7 +21,9 @@ if [ ! -e ~/git_project/bashlib_y ];then
 		echo "FATAL: cannot git clone bashlib_y"
 		exit 1
 	fi
+	pushd ~/git_project/bashlib_y > /dev/null
 	~/git_project/bashlib_y/binst
+	popd
 fi
 
 
