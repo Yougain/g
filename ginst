@@ -49,12 +49,12 @@ fi
 
 
 $SUDO bash <<-END
-	for f in `ls`; do
-		if [ -x ./$f ]; then
-			if [ ! -e "$R/usr/bin/$f" ];then
-				ln -vs "$PWD/$f" $R/usr/bin
+	for f in \`ls\`; do
+		if [ -x ./\$f ]; then
+			if [ ! -e "$R/usr/bin/\$f" ];then
+				ln -vs "$PWD/\$f" $R/usr/bin
 			else
-				echo $R/usr/bin/$f already exists.
+				echo $R/usr/bin/\$f already exists.
 			fi
 		fi
 	done
