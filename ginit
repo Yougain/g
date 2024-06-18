@@ -22,10 +22,7 @@ if [ -z "$1" ];then
 	PWD="`pwd`"
 	if [ "${PWD%/*}" != $HOME/git_project ];then
 		die "Current direcotry is not an entry in \$HOME/git_project."
-	elif [ -e .git ];then
-		die "./.git already exists."
 	fi
-	
 	target=${PWD##*/}
 else
 	target=$1
