@@ -1,7 +1,9 @@
 #!/bin/env bash
 
 
-if ! PATH="./:$PATH" source bashlib_y;then
+PATH="./:$PATH"
+
+if ! source bashlib_y;then
 	echo -e "\033[41m\033[33mERROR    :\033[m \033[31m""bashlib_y not found.\033[m"
 	exit 1
 fi
