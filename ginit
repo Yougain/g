@@ -2,7 +2,7 @@
 
 
 crep(){
-	local FL=(`git ls-file`)
+	local FL=(`git ls-files`)
 	local fnd
 	for f in ${FL[@]};do
 		if [ $f = README.md ];then
