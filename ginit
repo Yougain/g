@@ -18,7 +18,6 @@ crep(){
 	git remote set-url origin git@github.com:$G_USER/$target.git
 	git remote add origin git@github.com:$G_USER/$target.git
 	git push -u origin main 2>&1| while read ln;do
-		echo $ln
 		if [ "$ln" = "ERROR: Repository not found." ];then
 			echo "ERROR: Remote repository not found. \nPlease make the repository, '$target' and reexececute 'git push -u origin main' manually" >&2
 		fi
