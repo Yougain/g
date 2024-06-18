@@ -1,0 +1,53 @@
+#!/bin/env bash
+
+
+source bashlib_y
+
+
+crep(){
+	git add README.md
+	git commit -a -m "0"
+	git branch -M main
+	git remote set-url origin git@github.com:$G_USER/$target.git
+	git remote add origin git@github.com:$G_USER/$target.git
+	git push -u origin main 2>&1| while read ln;do
+		if [ "$ln" = "ERROR: Repository not found." ];then
+			die "Remote repository not found. \nPlease make the repository, '$target' and reexececute 'git push -u origin main' manually"
+		fi
+	done
+}
+
+
+if [ -z "$1" ];then
+	PWD="`pwd`"
+	if [ "${PWD%/*}" != $HOME/git_project ];then
+		die "Current direcotry is not an entry in \$HOME/git_project."
+	elif [ -e .git ];then
+		die "./.git already exists."
+	fi
+	
+	target=${PWD##*/}
+else
+	target=$1
+fi
+
+G_USER=`git config user.name`
+if [ -z "$G_USER" ];then
+	die "Missing user for git. 
+Please set user by executing 'git user.name --(global|local) USER_NAME'"
+fi
+
+if ! [[ $target =~ ^[0-9A-Za-z_]+$ ]];then
+	die "Illeagal name, '$target'"
+fi
+
+mkdir -p ~/git_project/$target
+cd ~/git_project/$target
+
+if ! [ -d ~/git_project/$target/.git ];then
+	echo "# $target" >> README.md
+	git init
+fi
+crep
+
+
