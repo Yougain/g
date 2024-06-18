@@ -16,7 +16,10 @@ crep(){
 	fi
 	git branch -M main
 	git remote set-url origin git@github.com:$G_USER/$target.git
-	git remote add origin git@github.com:$G_USER/$target.git
+	local ret="`git remote add origin git@github.com:$G_USER/$target.git 2>&1`"
+	if ! [ "$ret" = "error: remote origin already exists." ];then
+		echo $ret
+	fi
 	git push -u origin main 2>&1| while read ln;do
 		if [ "$ln" = "ERROR: Repository not found." ];then
 			echo "ERROR: Remote repository not found. \nPlease make the repository, '$target' and reexececute 'git push -u origin main' manually" >&2
