@@ -2,8 +2,18 @@
 
 
 crep(){
-	git add README.md
-	git commit -a -m "0"
+	local FL=(`git ls-file`)
+	local fnd
+	for f in ${FL[@]};do
+		if [ $f = README.md ];then
+			fnd=1
+			break
+		fi
+	done
+	if [ -z "$fnd" ];then
+		git add README.md
+		git commit -a -m "0"
+	fi
 	git branch -M main
 	git remote set-url origin git@github.com:$G_USER/$target.git
 	git remote add origin git@github.com:$G_USER/$target.git
