@@ -26,6 +26,7 @@ crep(){
 		fi
 		if [ "${ln:0:17}" = "ERROR: Permission" ];then
 			echo $ln
+			echo "Please check ssh access rights. Ex. 'git config core.sshCommand'"
 		fi
 	done
 }
