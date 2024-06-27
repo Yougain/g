@@ -54,7 +54,22 @@ fi
 
 
 $SUDO bash <<-END
+	list=()
+	if [ -e inst ];then
+		while read ln; do
+			list+=($ln)
+		done < inst
+	fi
 	for f in \`ls\`; do
+		found=
+		for i in ${list[@]}; do
+			if [ "$f" = "${i##*/}" ];then
+				ln -vs "$PWD/\$f" $R/$i
+				found=1
+				break
+			fi
+		done
+		[ -z "$found" ] && continue
 		if [ -x ./\$f ]; then
 			if [ ! -e "$R/usr/bin/\$f" -a ! -L "$R/usr/bin/\$f" ];then
 				ln -vs "$PWD/\$f" $R/usr/bin

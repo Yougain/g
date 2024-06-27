@@ -90,12 +90,12 @@ function commit(){
 			echo -E "`date` `v` $*
 `cat change_log`" > change_log.new
 			mv -f change_log.new change_log
-			local log_exist=$(echo "`git ls-files`" | egrep "^change_log$")
+			local log_exist=$(echo "`git ls-files`" | grep -E "^change_log$")
 			if [ -z "$log_exist" ];then
 				git add change_log
 			fi
 		fi
-		local version_exist=$(echo "`git ls-files`" | egrep "^version$")
+		local version_exist=$(echo "`git ls-files`" | grep -E "^version$")
 		if [ -z "$version_exist" ];then
 			git add version
 		fi
