@@ -135,13 +135,13 @@ function main(){
 
 	G_USER=`git config user.name`
 	if [ -z "$G_USER" ];then
-		die "Missing user for git. Please set user by executing 'git user.name USER_NAME\ngit user.email EMAIL'"
+		die "Missing user for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
 	fi
 
 
 	G_EMAIL=`git config user.email`
 	if [ -z "$G_EMAIL" ];then
-		die "Missing user email for git. Please set user by executing 'git user.name USER_NAME\ngit user.email EMAIL'"
+		die "Missing user email for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
 	fi
 
 	dbv ${all_args[@]}
