@@ -35,8 +35,8 @@ function ssh_clone(){
 					retry=
 					while true; do
 						git commit -a -m "commit from $USER@`hostname -f`" > $SCRIPT_TMP_DIR/res1 2>&1
+						cat $SCRIPT_TMP_DIR/res1
 						while read ln2; do
-							echo \$ln2
 							if [[ "\$ln2" =~ Author\ identity\ unknown ]]; then
 								green config user.name $G_USER ...
 								git config --local user.name $G_USER
@@ -57,8 +57,8 @@ function ssh_clone(){
 					retry=
 					while true; do
 						git pull > $SCRIPT_TMP_DIR/res2 2>&1 
+						cat $SCRIPT_TMP_DIR/res2
 						while read ln2; do
-							echo \$ln2
 							if [[ "\$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
 								green config pull.rebase false ...
 								git config pull.rebase false
@@ -122,6 +122,48 @@ function v(){
 }
 
 
+function do_git(){
+	local retry
+	local stat
+	local ln2
+	while true; do
+		dbv $@
+		green git $@ ...
+		git $@ > $SCRIPT_TMP_DIR/res1 2>&1
+		stat=$?
+		cat $SCRIPT_TMP_DIR/res1
+		dbv
+		while read ln2; do
+			dbv $ln2
+			if [[ "$ln2" =~ Author\ identity\ unknown ]]; then
+				green git config user.name $G_USER ...
+				git config --local user.name $G_USER
+				green git config user.name $G_EMAIL ...
+				git config --local user.email $G_EMAIL
+				git commit -a -m "commit from $USER@`hostname -f`"
+				retry=1
+			fi
+			if [[ "$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
+				green git config pull.rebase false ...
+				git config pull.rebase false
+				retry=1
+			fi
+			if [[ "$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
+				green git branch --set-upstream-to=origin/main main
+				git branch --set-upstream-to=origin/main main
+				retry=1
+			fi
+		done < $SCRIPT_TMP_DIR/res1
+		dbv $retry
+		if [ -z "$retry" ];then
+			break
+		fi
+		retry=
+	done
+	return $stat
+}
+
+
 function commit(){
 	dbv $#
 	dbv $@
@@ -138,18 +180,18 @@ function commit(){
 			mv -f change_log.new change_log
 			local log_exist=$(echo "`git ls-files`" | grep -E "^change_log$")
 			if [ -z "$log_exist" ];then
-				git add change_log
+				do_git add change_log
 			fi
 		fi
 		local version_exist=$(echo "`git ls-files`" | grep -E "^version$")
 		if [ -z "$version_exist" ];then
-			git add version
+			do_git add version
 		fi
-		git commit -a -m "`v` $*"
-		if ! git pull --no-edit; then
+		do_git commit -a -m "`v` $*"
+		if ! do_git pull --no-edit; then
 			exit 1
 		fi
-		if ! git push; then
+		if ! do_git push; then
 			exit 1
 		fi
 	else
@@ -205,10 +247,11 @@ function main(){
 	if [ -e .git/.g-pre-commit ];then
 		.git/.g-pre-commit
 	fi
-
-	CM=`git commit -a --dry-run`
+	dbv
+	CM="`do_git commit -a --dry-run`"
+	dbv $CM
 	if ! [[ $CM =~ (modified|new\ file):\  ]]; then
-		if ! git pull --no-edit; then
+		if ! do_git pull --no-edit; then
 			exit 1
 		fi
 		warn "Not modified.$Emsg"
