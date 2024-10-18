@@ -19,7 +19,7 @@ function ssh_clone(){
 		tdirb="~/${tdirb##*/}"
 		local ret=0
 		while read ln; do
-			echo ssh cloning to $ln
+			cyan ssh cloning to $ln
 			deb $DEBUG
 			deb $ln
 			ssh_param $ln -x -q
@@ -31,15 +31,58 @@ function ssh_clone(){
 				fi
 				if [ -n "\$td" ];then
 					pushd \$td > /dev/null
-					echo commit ...
-					git commit -a -m "commit from $USER@`hostname -f`"
-					echo pull ...
-					git pull
+					green commit ...
+					retry=
+					while true; do
+						git commit -a -m "commit from $USER@`hostname -f`" > $SCRIPT_TMP_DIR/res1 2>&1
+						while read ln2; do
+							echo \$ln2
+							if [[ "\$ln2" =~ Author\ identity\ unknown ]]; then
+								green config user.name $G_USER ...
+								git config --local user.name $G_USER
+								green config user.name $G_EMAIL ...
+								git config --local user.email $G_EMAIL
+								git commit -a -m "commit from $USER@`hostname -f`"
+								retry=1
+							fi
+						done < $SCRIPT_TMP_DIR/res1
+						if [ -z "\$retry" ];then
+							break
+						fi
+						retry=
+					done
+					unset ln
+					stdbuf -oL echo
+					green pull ...
+					retry=
+					while true; do
+						git pull > $SCRIPT_TMP_DIR/res2 2>&1 
+						while read ln2; do
+							echo \$ln2
+							if [[ "\$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
+								green config pull.rebase false ...
+								git config pull.rebase false
+								retry=1
+							fi
+							if [[ "\$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
+								green git branch --set-upstream-to=origin/main main
+								git branch --set-upstream-to=origin/main main
+								retry=1
+							fi
+						done < $SCRIPT_TMP_DIR/res2
+						if [ -z "\$retry" ];then
+							break
+						fi
+						retry=
+					done
 					popd > /dev/null
 				else
+					green_n force-clone ...
 					git-force-clone $url $tdir
 					pushd $tdir > /dev/null
+					green_n config user.name $G_USER ...
 					git config --local user.name $G_USER
+					green config user.name $G_EMAIL ...
 					git config --local user.email $G_EMAIL
 					git branch -u origin
 					git remote set-url origin git@github.com:$G_USER/${url##*/}
