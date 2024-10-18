@@ -19,6 +19,7 @@ function ssh_clone(){
 		tdirb="~/${tdirb##*/}"
 		local ret=0
 		while read ln; do
+			echo ssh cloning to $ln
 			deb $DEBUG
 			deb $ln
 			ssh_param $ln -x -q
@@ -30,7 +31,9 @@ function ssh_clone(){
 				fi
 				if [ -n "\$td" ];then
 					pushd \$td > /dev/null
+					echo commit ...
 					git commit -a -m "commit from $USER@`hostname -f`"
+					echo pull ...
 					git pull
 					popd > /dev/null
 				else
