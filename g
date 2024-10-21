@@ -189,11 +189,11 @@ function commit(){
 		fi
 		do_git commit -a -m "`v` $*"
 		if ! do_git pull --no-edit; then
-			do_git rebase --abort
-			do_git reset --merge
-			mv -f version version.failed
-			do_git reset --soft
-			mv -f version.prev version
+			#do_git rebase --abort
+			#do_git reset --merge
+			#mv -f version version.failed
+			#do_git reset --soft
+			#mv -f version.prev version
 			exit 1
 		fi
 		if ! do_git push; then
