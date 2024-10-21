@@ -274,6 +274,7 @@ function main(){
 	fi
 
 	if [ ! -e ./version ];then
+		warn "version not found. create version = 0"
 		echo 0 > version
 		git add version
 	fi
