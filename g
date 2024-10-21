@@ -144,8 +144,8 @@ function do_git(){
 				retry=1
 			fi
 			if [[ "$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
-				green git config pull.rebase false ...
-				git config pull.rebase false
+				green git config pull.rebase true ...
+				git config pull.rebase true
 				retry=1
 			fi
 			if [[ "$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
@@ -189,6 +189,8 @@ function commit(){
 		fi
 		do_git commit -a -m "`v` $*"
 		if ! do_git pull --no-edit; then
+			do_git reset --soft
+			mv -f version.prev version
 			exit 1
 		fi
 		if ! do_git push; then
@@ -261,11 +263,23 @@ function main(){
 			exit 1
 		fi
 	fi
+	
+	if ! do_git fetch; then
+		exit 1
+	fi
+	
+	local cid="`git log origin/main -1 | head -1 | awk '{print $2}'`"
+	if [ -z "$cid" ];then
+		exit 1
+	fi
 
 	if [ ! -e ./version ];then
 		echo 0 > version
 		git add version
 	fi
+	
+	mv -f version version.prev
+	do_git checkout $cid version
 
 	ver=`cat version|head -1|awk '{print $1}'`
 	if [[ "`cat version|head -1|awk '{print $1}'`" =~ ^[0-9]+(\.[0-9]+)*$ ]];then
