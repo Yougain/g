@@ -36,7 +36,7 @@ function ssh_clone(){
 					green commit ...
 					retry=
 					while true; do
-						git commit -a -m "commit from $USER@`hostname -f`" > $SCRIPT_TMP_DIR/res1 2>&1
+						git commit -a -m "commit from $USER@`hostname -s`" > $SCRIPT_TMP_DIR/res1 2>&1
 						cat $SCRIPT_TMP_DIR/res1
 						while read ln2; do
 							if [[ "\$ln2" =~ Author\ identity\ unknown ]]; then
@@ -44,7 +44,7 @@ function ssh_clone(){
 								git config --local user.name $G_USER
 								green config user.name $G_EMAIL ...
 								git config --local user.email $G_EMAIL
-								git commit -a -m "commit from $USER@`hostname -f`"
+								git commit -a -m "commit from $USER@`hostname -s`"
 								retry=1
 							fi
 						done < $SCRIPT_TMP_DIR/res1
@@ -142,7 +142,7 @@ function do_git(){
 				git config --local user.name $G_USER
 				green git config user.name $G_EMAIL ...
 				git config --local user.email $G_EMAIL
-				git commit -a -m "commit from $USER@`hostname -f`"
+				git commit -a -m "commit from $USER@`hostname -s`"
 				retry=1
 			fi
 			if [[ "$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
@@ -191,7 +191,7 @@ function commit(){
 			do_git add version
 		fi
 
-		do_git commit -a -m "`v` $* $USER@`hostname -f`"
+		do_git commit -a -m "`v` $* $USER@`hostname -s`"
 
 		if ! do_git push; then
 			exit 1
@@ -289,15 +289,14 @@ function main(){
 	Note that you cannot use non-numeric characters in it."
 	fi
 
-	vers=($(cat version | head -1 |awk '{print $1}' | tr '.' ' '))
 
 	if ! do_git fetch; then
 		exit 1
 	fi
 	
-	if [ "`git log -1 | head -1 | awk '{print $1}'`" != "`git log -1 origin/main | head -1 | awk '{print $1}'`" ]; then
+	if [ "`git log -1 | head -1 | awk '{print $2}'`" != "`git log -1 origin/main | head -1 | awk '{print $2}'`" ]; then
 	
-		do_git commit -a -m "`v`.9999 before pull from $USER@`hostname -f`"
+		do_git commit -a -m "`v`.9999 before pull from $USER@`hostname -s`"
 		if ! do_git pull origin main; then
 			#do_git rebase --abort
 			#do_git reset --merge
@@ -306,8 +305,10 @@ function main(){
 			#mv -f version.prev version
 			exit 1
 		fi
+
 	fi
 	
+	vers=($(cat version | head -1 |awk '{print $1}' | tr '.' ' '))
 
 	cmd="$(__CMD_NAME__)"
 
