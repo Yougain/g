@@ -2,6 +2,7 @@
 
 require 'Yk/path_aux'
 require 'Yk/auto_escseq'
+require 'shellwords'
 
 if ARGV.detect{_1 =~ /^\-(\d+|)$/}
 	if $1 == ""
@@ -9,13 +10,14 @@ if ARGV.detect{_1 =~ /^\-(\d+|)$/}
 	else
 		numOpt = $1.to_i
 	end
+	ARGV.delete_if{_1 =~ /^\-(\d+|)$/}
 else
 	numOpt = 10
 end
 
 lnum = 0
 lns = []
-'git log  --pretty=format:"%ad %h %d %s" --date=iso'.read_each_line_p do |ln|
+('git log  --pretty=format:"%ad %h %d %s" --date=iso ' + Shellwords.join(ARGV)).read_each_line_p do |ln|
 	arr = ln.split
 	arr[4].sub! /(?<=\(|,)HEAD(?=,|\))/, '\&'.cyan
 	lns.push "#{arr[0][5..-1]} #{arr[1]} #{arr[3].yellow} #{arr[4]} #{arr[5..-1].join(' ')}\n"
