@@ -265,9 +265,10 @@ function main(){
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
 	if ! [[ $CM =~ (modified|new\ file):\  ]]; then
-		#if ! do_git pull --no-edit; then
-		#	exit 1
-		#fi
+		if ! do_git pull --no-edit; then
+			warn "Pull failed.$Emsg"
+			exit 1
+		fi
 		warn "Not modified.$Emsg"
 		if [ -n "$force_pre_post" ];then
 			no_ver_mod=1
