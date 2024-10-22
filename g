@@ -264,7 +264,7 @@ function main(){
 	dbv
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
-	if ! [[ $CM =~ (modified|new\ file):\  ]]; then
+	if ! [[ $CM =~ Changes\ to\ be\ committed: ]]; then
 		if ! do_git pull --no-edit; then
 			warn "Pull failed.$Emsg"
 			exit 1
