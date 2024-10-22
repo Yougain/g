@@ -201,10 +201,8 @@ function commit(){
 		fi
 
 		
-		mv -f version version.prev
-		do_git checkout $cid version
-
-
+#		mv -f version version.prev
+#		do_git checkout $cid version
 
 	else
 		echo "Only ssh clone."
