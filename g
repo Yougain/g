@@ -127,9 +127,9 @@ function do_git(){
 	local stat
 	local ln2
 	while true; do
-		dbv $@
-		green git $@ ...
-		git $@ > $SCRIPT_TMP_DIR/res1 2>&1
+		dbv "$@"
+		green git "$@" ...
+		git "$@" > $SCRIPT_TMP_DIR/res1 2>&1
 		stat=$?
 		cat $SCRIPT_TMP_DIR/res1
 		dbv
@@ -169,6 +169,7 @@ function commit(){
 	dbv $@
 	dbv $*
 	if [ -z "$no_ver_mod" ];then
+
 		echo -E "`v` `date` $*
 `cat version`
 " > version.new
@@ -187,18 +188,24 @@ function commit(){
 		if [ -z "$version_exist" ];then
 			do_git add version
 		fi
+
 		do_git commit -a -m "`v` $*"
-		if ! do_git pull --no-edit; then
-			#do_git rebase --abort
-			#do_git reset --merge
-			#mv -f version version.failed
-			#do_git reset --soft
-			#mv -f version.prev version
-			exit 1
-		fi
+
 		if ! do_git push; then
 			exit 1
 		fi
+
+		local cid="`git log origin/main -1 | head -1 | awk '{print $2}'`"
+		if [ -z "$cid" ];then
+			exit 1
+		fi
+
+		
+		mv -f version version.prev
+		do_git checkout $cid version
+
+
+
 	else
 		echo "Only ssh clone."
 	fi
@@ -252,6 +259,7 @@ function main(){
 	if [ -e .git/.g-pre-commit ];then
 		.git/.g-pre-commit
 	fi
+	
 	dbv
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
@@ -267,24 +275,12 @@ function main(){
 		fi
 	fi
 	
-	if ! do_git fetch; then
-		exit 1
-	fi
-	
-	local cid="`git log origin/main -1 | head -1 | awk '{print $2}'`"
-	if [ -z "$cid" ];then
-		exit 1
-	fi
-
 	if [ ! -e ./version ];then
 		warn "version not found. create version = 0"
 		echo 0 > version
 		git add version
 	fi
 	
-	mv -f version version.prev
-	do_git checkout $cid version
-
 	ver=`cat version|head -1|awk '{print $1}'`
 	if [[ "`cat version|head -1|awk '{print $1}'`" =~ ^[0-9]+(\.[0-9]+)*$ ]];then
 		vers=(`echo $ver |tr '.' ' '`)
@@ -293,7 +289,21 @@ function main(){
 	Note that you cannot use non-numeric characters in it."
 	fi
 
-	vers=($(cat version | awk '{print $1}' | tr '.' ' '))
+	vers=($(cat version | head -1 |awk '{print $1}' | tr '.' ' '))
+
+	if ! do_git fetch; then
+		exit 1
+	fi
+	do_git commit -a -m "`v`.9999 before pull"
+	if ! do_git pull origin main; then
+		#do_git rebase --abort
+		#do_git reset --merge
+		#mv -f version version.failed
+		#do_git reset --soft
+		#mv -f version.prev version
+		exit 1
+	fi
+	
 
 	cmd="$(__CMD_NAME__)"
 
@@ -335,6 +345,7 @@ function main(){
 	esac
 
 	commit ${all_args[@]}
+
 }
 
 

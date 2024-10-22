@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'Yk/path_aux'
+require 'Yk/auto_escseq'
+
+if ARGV.detect{_1 =~ /^\-(\d+|)$/}
+	if $1 == ""
+		numOpt = nil
+	else
+		numOpt = $1.to_i
+	end
+else
+	numOpt = 10
+end
+
+lnum = 0
+lns = []
+'git log  --pretty=format:"%ad %h %d %s" --date=iso'.read_each_line_p do |ln|
+	arr = ln.split
+	arr[4].sub! /(?<=\(|,)HEAD(?=,|\))/, '\&'.cyan
+	lns.push "#{arr[0][5..-1]} #{arr[1]} #{arr[3].yellow} #{arr[4]} #{arr[5..-1].join(' ')}\n"
+end
+
+if numOpt
+	lns[0 ...  numOpt].each{ print _1 }
+
+	if lns.size > numOpt
+		print "...\n"
+	end
+else
+	print *lns
+end
+
