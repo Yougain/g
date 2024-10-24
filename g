@@ -265,20 +265,16 @@ function main(){
 		exit $ret
 	fi
 
-	echo 1
 	G_USER=`git config user.name`
 	if [ -z "$G_USER" ];then
 		die "Missing user for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
 	fi
 
-
-	echo 2
 	G_EMAIL=`git config user.email`
 	if [ -z "$G_EMAIL" ];then
 		die "Missing user email for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
 	fi
 
-	echo 3
 	dbv ${all_args[@]}
 	if opt -f; then
 		force=1
@@ -293,14 +289,11 @@ function main(){
 	if [ -e .git/.g-pre-commit ];then
 		.git/.g-pre-commit
 	fi
-		echo 4
 
 	dbv
 	if [ -z "$DRB" ];then
 		DRB="`get_default_remote_branch`"
 	fi
-
-	echo 5
 
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
@@ -331,7 +324,6 @@ function main(){
 		die "The first word of file, 'version' cannot interpreted as version number ('$ver').
 	Note that you cannot use non-numeric characters in it."
 	fi
-
 
 	if ! do_git fetch; then
 		exit 1
