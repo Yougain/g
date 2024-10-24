@@ -281,13 +281,7 @@ function main(){
 	dbv $CM
 	if ! [[ $CM =~ Changes\ to\ be\ committed: ]]; then
 		
-		DRB="`get_default_remote_branch`"
-		
-		if [ -z "$DRB" ];then
-			die "Cannot get default remote branch name."
-		fi
-		
-		if ! do_git pull $DRB; then
+		if ! do_git pull origin; then
 			warn "Pull failed.$Emsg"
 			exit 1
 		fi
