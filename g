@@ -197,7 +197,7 @@ function commit(){
 
 		do_git commit -a -m "`v` $* $USER@`hostname -s`"
 
-		if ! do_git push; then
+		if ! do_git push HEAD:$DRB ; then
 			exit 1
 		fi
 
@@ -227,7 +227,7 @@ function get_default_remote_branch(){
 	fi
 	local rmn=`echo "$lns"|grep $hid|awk '{print $2}'`
 	rmn="${rmn##*/}"
-	echo -n origin/$rmn
+	echo -n $rmn
 }
 
 
