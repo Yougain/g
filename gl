@@ -20,6 +20,11 @@ lns = []
 ('git log  --pretty=format:"%ad %h %d %s" --date=iso ' + Shellwords.join(ARGV)).read_each_line_p do |ln|
 	arr = ln.split
 	arr[4].sub! /(?<=\(|,)HEAD(?=,|\))/, '\&'.cyan
+	if arr[0][0..3] != Time.now.year.to_s
+		d = arr[0]
+	else
+		d = arr[0][5..-1]
+	end
 	lns.push "#{arr[0][5..-1]} #{arr[1]} #{arr[3].yellow} #{arr[4]} #{arr[5..-1].join(' ')}\n"
 end
 

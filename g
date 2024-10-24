@@ -28,7 +28,7 @@ function ssh_clone(){
 			ssh_param $ln -x -q
 			ssh_do <<-}
 				if true; then
-					g
+					g --no-push
 				else
 					if [ -d $tdirb/.git ];then
 						td=$tdirb
@@ -256,6 +256,8 @@ function main(){
 		exec g1 "$@"
 	elif opt -0; then
 		exec g0 "$@"
+	elif opt --no-push; then
+		NO_PUSH=1
 	elif ! opt --locked; then
 		flock -E 255 -x ./ $0 --locked $@
 		local ret=$?
@@ -342,6 +344,10 @@ function main(){
 			exit 1
 		fi
 
+	fi
+	
+	if [ -n "$NO_PUSH" ];then
+		exit 0
 	fi
 	
 	vers=($(cat version | head -1 |awk '{print $1}' | tr '.' ' '))
