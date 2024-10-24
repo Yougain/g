@@ -65,11 +65,14 @@ function ssh_clone(){
 							if [[ "\$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
 								green config pull.rebase false ...
 								git config pull.rebase false
-								retry=1
 							fi
 							if [[ "\$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
-								green git branch --set-upstream-to=origin/main main
-								git branch --set-upstream-to=origin/main main
+								if [ -n "$DRB" ];then
+									green git branch --set-upstream-to=$DRB main
+									git branch --set-upstream-to=$DRB main
+								else
+									die "Cannot detect default remote branch name."
+								fi
 								retry=1
 							fi
 						done < $SCRIPT_TMP_DIR/res2
@@ -198,10 +201,10 @@ function commit(){
 			exit 1
 		fi
 
-		local cid="`git log origin/main -1 | head -1 | awk '{print $2}'`"
-		if [ -z "$cid" ];then
-			exit 1
-		fi
+#		local cid="`git log origin/main -1 | head -1 | awk '{print $2}'`"
+#		if [ -z "$cid" ];then
+#			exit 1
+#		fi
 
 		
 #		mv -f version version.prev
@@ -214,6 +217,18 @@ function commit(){
 }
 
 require args
+
+
+function get_default_remote_branch(){
+	local lns="`git ls-remote`"
+	local hid=`echo "$lns"|grep HEAD|awk '{print $1}'`
+	if [ -z "$hid" ];then
+		return
+	fi
+	local rmn=`echo "$lns"|grep $hid|awk '{print $2}'`
+	rmn="${rmn##*/}"
+	echo -n origin/$rmn
+}
 
 
 function main(){
@@ -265,7 +280,14 @@ function main(){
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
 	if ! [[ $CM =~ Changes\ to\ be\ committed: ]]; then
-		if ! do_git pull --no-edit; then
+		
+		DRB="`get_default_remote_branch`"
+		
+		if [ -z "$DRB" ];then
+			die "Cannot get default remote branch name."
+		fi
+		
+		if ! do_git pull $DRB --no-edit; then
 			warn "Pull failed.$Emsg"
 			exit 1
 		fi
@@ -296,10 +318,18 @@ function main(){
 		exit 1
 	fi
 	
-	if [ "`git log -1 | head -1 | awk '{print $2}'`" != "`git log -1 origin/main | head -1 | awk '{print $2}'`" ]; then
+	if [ -z "$DRB" ];then
+		DRB="`get_default_remote_branch`"
+		
+		if [ -z "$DRB" ];then
+			die "Cannot get default remote branch name."
+		fi
+	fi
+	
+	if [ "`git log -1 | head -1 | awk '{print $2}'`" != "`git ls-remote | grep HEAD | awk '{print $1}'`" ]; then
 	
 		do_git commit -a -m "`v`.9999 before pull from $USER@`hostname -s`"
-		if ! do_git pull origin main; then
+		if ! do_git pull $DRB; then
 			#do_git rebase --abort
 			#do_git reset --merge
 			#mv -f version version.failed
