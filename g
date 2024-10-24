@@ -27,72 +27,76 @@ function ssh_clone(){
 			deb $ln
 			ssh_param $ln -x -q
 			ssh_do <<-}
-				if [ -d $tdirb/.git ];then
-					td=$tdirb
-				elif [ -d $tdir/.git ];then
-					td=$tdir
-				fi
-				if [ -n "\$td" ];then
-					pushd \$td > /dev/null
-					green commit ...
-					retry=
-					while true; do
-						git commit -a -m "commit from $USER@`hostname -s`" > $SCRIPT_TMP_DIR/res1 2>&1
-						cat $SCRIPT_TMP_DIR/res1
-						while read ln2; do
-							if [[ "\$ln2" =~ Author\ identity\ unknown ]]; then
-								green config user.name $G_USER ...
-								git config --local user.name $G_USER
-								green config user.name $G_EMAIL ...
-								git config --local user.email $G_EMAIL
-								git commit -a -m "commit from $USER@`hostname -s`"
-								retry=1
-							fi
-						done < $SCRIPT_TMP_DIR/res1
-						if [ -z "\$retry" ];then
-							break
-						fi
-						retry=
-					done
-					unset ln
-					stdbuf -oL echo
-					green pull ...
-					retry=
-					while true; do
-						git pull > $SCRIPT_TMP_DIR/res2 2>&1 
-						cat $SCRIPT_TMP_DIR/res2
-						while read ln2; do
-							if [[ "\$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
-								green config pull.rebase false ...
-								git config pull.rebase false
-							fi
-							if [[ "\$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
-								if [ -n "$DRB" ];then
-									green git branch --set-upstream-to=origin/$DRB main
-									git branch --set-upstream-to=origin/$DRB main
-								else
-									die "Cannot detect default remote branch name."
-								fi
-								retry=1
-							fi
-						done < $SCRIPT_TMP_DIR/res2
-						if [ -z "\$retry" ];then
-							break
-						fi
-						retry=
-					done
-					popd > /dev/null
+				if true; then
+					g
 				else
-					green_n force-clone ...
-					git-force-clone $url $tdir
-					pushd $tdir > /dev/null
-					green_n config user.name $G_USER ...
-					git config --local user.name $G_USER
-					green config user.name $G_EMAIL ...
-					git config --local user.email $G_EMAIL
-					git branch -u origin
-					git remote set-url origin git@github.com:$G_USER/${url##*/}
-					popd > /dev/null
+					if [ -d $tdirb/.git ];then
+						td=$tdirb
+					elif [ -d $tdir/.git ];then
+						td=$tdir
+					fi
+					if [ -n "\$td" ];then
+						pushd \$td > /dev/null
+						green commit ...
+						retry=
+						while true; do
+							git commit -a -m "commit from $USER@`hostname -s`" > $SCRIPT_TMP_DIR/res1 2>&1
+							cat $SCRIPT_TMP_DIR/res1
+							while read ln2; do
+								if [[ "\$ln2" =~ Author\ identity\ unknown ]]; then
+									green config user.name $G_USER ...
+									git config --local user.name $G_USER
+									green config user.name $G_EMAIL ...
+									git config --local user.email $G_EMAIL
+									git commit -a -m "commit from $USER@`hostname -s`"
+									retry=1
+								fi
+							done < $SCRIPT_TMP_DIR/res1
+							if [ -z "\$retry" ];then
+								break
+							fi
+							retry=
+						done
+						unset ln
+						stdbuf -oL echo
+						green pull ...
+						retry=
+						while true; do
+							git pull origin $DRB > $SCRIPT_TMP_DIR/res2 2>&1 
+							cat $SCRIPT_TMP_DIR/res2
+							while read ln2; do
+								if [[ "\$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
+									green config pull.rebase false ...
+									git config pull.rebase false
+								fi
+								if [[ "\$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
+									if [ -n "$DRB" ];then
+										green git branch --set-upstream-to=origin/$DRB main
+										git branch --set-upstream-to=origin/$DRB main
+									else
+										die "Cannot detect default remote branch name."
+									fi
+									retry=1
+								fi
+							done < $SCRIPT_TMP_DIR/res2
+							if [ -z "\$retry" ];then
+								break
+							fi
+							retry=
+						done
+						popd > /dev/null
+					else
+						green_n force-clone ...
+						git-force-clone $url $tdir
+						pushd $tdir > /dev/null
+						green_n config user.name $G_USER ...
+						git config --local user.name $G_USER
+						green config user.name $G_EMAIL ...
+						git config --local user.email $G_EMAIL
+						git branch -u origin
+						git remote set-url origin git@github.com:$G_USER/${url##*/}
+						popd > /dev/null
+					fi
 				fi
 			}
 			if [ "$?" = 255 ];then
@@ -235,7 +239,7 @@ function get_default_remote_branch(){
 	local rmn="${rmn##*/}"
 	local lmn="`git branch|grep -E '^\* '|awk '{print $2}'`"
 	if [ "$rmn" != "$lmn" ];then
-		echo -n "HEAD:#{rmn}"
+		echo -n "$rmn"
 	else
 		echo -n ""
 	fi
@@ -261,17 +265,20 @@ function main(){
 		exit $ret
 	fi
 
+	echo 1
 	G_USER=`git config user.name`
 	if [ -z "$G_USER" ];then
 		die "Missing user for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
 	fi
 
 
+	echo 2
 	G_EMAIL=`git config user.email`
 	if [ -z "$G_EMAIL" ];then
 		die "Missing user email for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
 	fi
 
+	echo 3
 	dbv ${all_args[@]}
 	if opt -f; then
 		force=1
@@ -286,13 +293,20 @@ function main(){
 	if [ -e .git/.g-pre-commit ];then
 		.git/.g-pre-commit
 	fi
-	
+		echo 4
+
 	dbv
+	if [ -z "$DRB" ];then
+		DRB="`get_default_remote_branch`"
+	fi
+
+	echo 5
+
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
 	if ! [[ $CM =~ Changes\ to\ be\ committed: ]]; then
 		
-		if ! do_git pull origin; then
+		if ! do_git pull origin $DRB; then
 			warn "Pull failed.$Emsg"
 			exit 1
 		fi
@@ -323,15 +337,11 @@ function main(){
 		exit 1
 	fi
 	
-	if [ -z "$DRB" ];then
-		DRB="`get_default_remote_branch`"
-		
-	fi
 	
 	if [ "`git log -1 | head -1 | awk '{print $2}'`" != "`git ls-remote | grep HEAD | awk '{print $1}'`" ]; then
 	
 		do_git commit -a -m "`v`.9999 before pull from $USER@`hostname -s`"
-		if ! do_git pull origin; then
+		if ! do_git pull origin $DRB; then
 			#do_git rebase --abort
 			#do_git reset --merge
 			#mv -f version version.failed
