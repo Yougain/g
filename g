@@ -68,8 +68,8 @@ function ssh_clone(){
 							fi
 							if [[ "\$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
 								if [ -n "$DRB" ];then
-									green git branch --set-upstream-to=$DRB main
-									git branch --set-upstream-to=$DRB main
+									green git branch --set-upstream-to=origin/$DRB main
+									git branch --set-upstream-to=origin/$DRB main
 								else
 									die "Cannot detect default remote branch name."
 								fi
@@ -196,8 +196,14 @@ function commit(){
 		fi
 
 		do_git commit -a -m "`v` $* $USER@`hostname -s`"
+		
+		if [ -n "$DRB" ];then
+			drb=HEAD:$DRB
+		else
+			drb=
+		fi
 
-		if ! do_git push HEAD:$DRB ; then
+		if ! do_git push $drb ; then
 			exit 1
 		fi
 
@@ -226,8 +232,13 @@ function get_default_remote_branch(){
 		return
 	fi
 	local rmn=`echo "$lns"|grep $hid|awk '{print $2}'`
-	rmn="${rmn##*/}"
-	echo -n $rmn
+	local rmn="${rmn##*/}"
+	local lmn="`git branch|grep -E '^\* '|awk '{print $2}'`"
+	if [ "$rmn" != "$lmn" ];then
+		echo -n "HEAD:#{rmn}"
+	else
+		echo -n ""
+	fi
 }
 
 
@@ -315,15 +326,12 @@ function main(){
 	if [ -z "$DRB" ];then
 		DRB="`get_default_remote_branch`"
 		
-		if [ -z "$DRB" ];then
-			die "Cannot get default remote branch name."
-		fi
 	fi
 	
 	if [ "`git log -1 | head -1 | awk '{print $2}'`" != "`git ls-remote | grep HEAD | awk '{print $1}'`" ]; then
 	
 		do_git commit -a -m "`v`.9999 before pull from $USER@`hostname -s`"
-		if ! do_git pull $DRB; then
+		if ! do_git pull origin; then
 			#do_git rebase --abort
 			#do_git reset --merge
 			#mv -f version version.failed
