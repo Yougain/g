@@ -287,7 +287,7 @@ function main(){
 			die "Cannot get default remote branch name."
 		fi
 		
-		if ! do_git pull $DRB --no-edit; then
+		if ! do_git pull $DRB; then
 			warn "Pull failed.$Emsg"
 			exit 1
 		fi
