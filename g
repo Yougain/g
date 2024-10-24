@@ -198,7 +198,7 @@ function commit(){
 		do_git commit -a -m "`v` $* $USER@`hostname -s`"
 		
 		if [ -n "$DRB" ];then
-			drb=HEAD:$DRB
+			drb="origin HEAD:$DRB"
 		else
 			drb=
 		fi
