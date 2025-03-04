@@ -16,7 +16,7 @@ fi
 
 
 if [ "$PWD" = "$HOME/git_project/bashlib_y" ];then
-	exec "./binst"
+	exec "./install"
 fi
 
 
@@ -27,7 +27,7 @@ if [ ! -e ~/git_project/bashlib_y ];then
 		exit 1
 	fi
 	pushd ~/git_project/bashlib_y > /dev/null
-	~/git_project/bashlib_y/binst
+	~/git_project/bashlib_y/install
 	popd > /dev/null
 fi
 
