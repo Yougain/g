@@ -268,13 +268,55 @@ function main(){
 	fi
 
 	G_USER=`git config user.name`
-	if [ -z "$G_USER" ];then
-		die "Missing user for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
-	fi
-
 	G_EMAIL=`git config user.email`
-	if [ -z "$G_EMAIL" ];then
-		die "Missing user email for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
+	ask_yes_no_color yellow magenta
+	if [ -z "$G_USER" -o -z "$G_EMAIL" ];then
+		yellow "Missing user and/or email for git."
+		local g_user
+		local g_email
+		for g in `find ~/git_project -maxdepth 2 -type d -name .git`;do
+			if [ -e $g/config ];then
+				if [ -z "$G_USER" ];then
+					g_user=$( (cd $g/..; git config user.name) )
+					if [ -n "$g_user" ];then
+						dbv $g_user
+						if [ -z "$G_EMAIL" ];then
+							g_email=$( (cd $g/..; git config user.email) )
+							if [ -n "$g_email" ] ;then
+								echo -e "Found '$cyan$g_user$white' and '$cyan$g_email$white' in '$cyan$g/config'$white."
+								if ask_yes_no "Use them?"; then
+									G_USER=$g_user
+									G_EMAIL=$g_email
+									git config user.name $g_user
+									git config user.email $g_email
+									break
+								fi
+							fi
+						else
+							echo -e "Found '$cyan$g_user$white' in '$cyan$g/config'$white."
+							if ask_yes_no "Use '$g_user' ?"; then
+								G_USER=$g_user
+								git config user.name $g_user
+								break
+							fi
+						fi
+					fi
+				elif [ -z "$G_EMAIL" ];then
+					g_email=$( (cd $g/..; git config user.email) )
+					if [ -n "$g_email" ] ;then
+						echo -e "Found '$cyan$g_email$white' in '$cyan$g/config'$white."
+						if ask_yes_no "Use $g_email ?"; then
+							G_EMAIL=$g_email
+							git config user.email $g_email
+							break
+						fi
+					fi
+				fi
+			fi
+		done
+		if [ -z "$G_USER" -o -z "$G_EMAIL" ];then
+			die "Missing user and/or email for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
+		fi
 	fi
 
 	dbv ${all_args[@]}
