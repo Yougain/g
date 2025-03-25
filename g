@@ -11,6 +11,45 @@ if ! source bashlib_y;then
 	exit 1
 fi
 
+if [ ! -e .git ];then
+	ginit
+fi
+
+
+function new_remote(){
+	if ! type gh >/dev/null 2>&1;then
+		yellow "'gsh' not found. "
+		if ask_yes_no "Install it?";then
+			if ! grep '\[gh-cli\]' -r /etc/yum.repos.d >/dev/null;then
+				sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+			fi
+			pkg_install gh
+			if ! type gh >/dev/null 2>&1;then
+				die "Installation failed."
+			fi
+		else
+			die "Exiting."
+		fi
+	fi
+	local rn=$(basename "$PWD")
+	echo "Creating repository, '$rn' ..."	
+	if ! gh auth status;then
+		echo 100
+		if ! gh auth login;then
+			die "Cannot login."
+		fi
+	fi
+	if ! gh repo create $rn --public; then
+		die "Cannot create remote repository, '$rn'."
+	else
+		echo "Remote repository, '$rn' created."
+	fi
+}
+
+
+
+
+
 function ssh_clone(){
  	if [ -e .git/.ssh_clone ]; then
 		require ssh_do
@@ -131,6 +170,11 @@ function v(){
 	fi
 }
 
+function ggit(){
+	green $@ ...
+	git "$@"
+}
+
 
 function do_git(){
 	local retry
@@ -154,13 +198,25 @@ function do_git(){
 				retry=1
 			fi
 			if [[ "$ln2" =~ Pulling\ without\ specifying\ how\ to\ reconcile\ divergent\ branches ]]; then
-				green git config pull.rebase true ...
-				git config pull.rebase true
+				ggit config pull.rebase true
 				retry=1
 			fi
-			if [[ "$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]];then
-				green git branch --set-upstream-to=origin/main main
-				git branch --set-upstream-to=origin/main main
+			if [[ "$ln2" =~ There\ is\ no\ tracking\ information\ for\ the\ current\ branch ]] ||
+			   [[ "$ln2" =~ You\ asked\ to\ pull\ from\ the\ remote\ \'origin\'\,\ but\ did\ not\ specify ]]
+			then
+				do_git branch --set-upstream-to=origin/main main
+				retry=1
+			fi
+			if [[ "$ln2" =~ fatal:\ no\ commit\ on\ branch\ \'main\'\ yet ]];then
+				dbv
+				ggit add '*'
+				ggit commit -a -m "commit from $USER@`hostname -s`"
+				ggit push --set-upstream origin main
+				retry=1
+			fi
+			if [[ "$ln2" =~ fatal:\ the\ requested\ upstream\ branch\ \'origin\/main\'\ does\ not\ exist ]];then
+				dbv
+				ggit push --set-upstream origin main
 				retry=1
 			fi
 		done < $SCRIPT_TMP_DIR/res1
@@ -229,8 +285,33 @@ function commit(){
 require args
 
 
+function create_repo(){
+	if ask_yes_no "Create repository?";then
+		new_remote
+	else
+		die "Exiting."
+	fi
+}
+
+function git_ls_reomote(){
+	if ! git ls-remote 2>/tmp/_g_.err > /tmp/_g_.res; then
+		if grep 'ERROR: Repository not found' /tmp/_g_.err; then
+			yellow "Remote repository not found." >&2
+			create_repo
+			if ! git ls-remote 2>/tmp/_g_.err > /tmp/_g_.res; then
+				die "Cannot find repository."
+			fi
+			lns="`cat /tmp/_g_.res`"
+		else
+			cat /tmp/_g_.err
+			die "Cannot connect to remote repository."
+		fi
+	fi
+}
+
 function get_default_remote_branch(){
-	local lns="`git ls-remote`"
+	local lns
+	git_ls_reomote 
 	local hid=`echo "$lns"|grep HEAD|awk '{print $1}'`
 	if [ -z "$hid" ];then
 		return
@@ -239,9 +320,9 @@ function get_default_remote_branch(){
 	local rmn="${rmn##*/}"
 	local lmn="`git branch|grep -E '^\* '|awk '{print $2}'`"
 	if [ "$rmn" != "$lmn" ];then
-		echo -n "$rmn"
+		DRB="$rmn"
 	else
-		echo -n ""
+		DRB=""
 	fi
 }
 
@@ -336,7 +417,7 @@ function main(){
 
 	dbv
 	if [ -z "$DRB" ];then
-		DRB="`get_default_remote_branch`"
+		get_default_remote_branch
 	fi
 
 	CM="`do_git commit -a --dry-run`"
