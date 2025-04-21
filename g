@@ -11,9 +11,6 @@ if ! source bashlib_y;then
 	exit 1
 fi
 
-if [ ! -e .git ];then
-	ginit
-fi
 
 
 function new_remote(){
@@ -328,7 +325,120 @@ function get_default_remote_branch(){
 
 
 function main(){
+	rm -f ~/.g.cd
 	. args
+	local i
+	local acnt=0
+	local target
+	local user
+	for i in "$@";do
+		if [ "${i:0:1}" = "-" ];then
+			continue
+		fi
+		acnt=$((acnt + 1))
+		if [ "$acnt" = 1 ];then
+			target="$i"
+		fi
+	done
+	if [ "$acnt" = 1 ];then
+		if [ "${target%/*}" != "$target" ];then
+			user="${target%%/*}"
+			target="${target#*/}"
+			if [ "${target%/*}" != "$target" ];then
+				die "Repository name '$target' contains '/'."
+			fi
+		fi
+		if [ -d "~/git_project/$target" ];then
+			local user_exist="`cd ~/git_project/$target; git config user.name`"
+			if [ -n "$user" ];then
+				if [ -n "$user_exist" ];then
+					if [ "$user" != "$user_exist" ];then
+						die "Git project by another user, '$user_exist' already exists."
+					else
+						echo "Git project, '$target' found. Changing direcotry to '~/git_project/$target'."
+						echo "$HOME/git_project/$target" > ~/.g.cd
+						exit 0
+					fi
+				fi
+			fi
+		fi
+		if [ -e "~/git_project/$target/.git" ];then
+			echo "Git project, '$target' found. Changing direcotry to '~/git_project/$target'."
+			echo "$HOME/git_project/$target" > ~/.g.cd
+			exit 0
+		fi
+		if [ ! -z "$(ls -A "~/git_project/$target" 2>/dev/null)" ]; then
+			die "Directory, '~/git_project/$target' is not empty."
+		fi
+		local user_list=()
+		if [ -z "$user" ];then
+			for i in ~/git_project/*; do
+				local j="`cd $i; git config user.name`"
+				if [ -z "$j" ];then
+					continue
+				fi
+				local k
+				local found=""
+				for k in ${user_list[@]};do
+					if [ "$k" = "$j" ];then
+						found=1
+						break
+					fi
+				done
+				if [ -z "$found" ];then
+					user_list+=("$j (used in $i)")
+				fi
+			done
+			if [ ${#user_list[@]} -gt 1 ];then
+				yellow "Multiple users found in '~/git_project'. Please select user name."
+				j=1
+				for i in "${user_list[@]}";do
+					echo -e "  $j. $cyan$i$white"
+					j=$((j + 1))
+				done
+				echo -e "  0. New user"
+				echo -n "Select user number: "
+				read j
+				if [ "$j" = 0 ];then
+					echo -n "Enter user name: "
+					read user
+				else
+					user="${user_list[$((j - 1))]}"
+					user="${user%% (*}"
+				fi
+			elif [ ${#user_list[@]} -eq 1 ];then
+				user="${user_list[0]}"
+				user="${user%% (*}"
+				local d="${user_list[0]##* (used in }"
+				d="${d%%)}"
+				if ! ask_yes_no "User, '$user' found in '$d'. Use it?";then
+					echo -n "Enter user name: "
+					read user
+				fi
+			else
+				echo -n "Enter user name: "
+				read user
+			fi
+		fi
+		if [ -z "$user" ]; then
+			die "User name not specified."
+		fi
+		if ! [[ "$user" =~ ^[a-zA-Z0-9_]+$ ]]; then
+			die "Invalid user name, '$user'."
+		fi
+		if git-force-clone "https://github.com/$user/$target.git" "$HOME/git_project/$target"; then
+			echo "$HOME/git_project/$target" > ~/.g.cd
+			exit 0
+		else
+			die "Cannot clone github repository, '$user/$target'."
+		fi
+	elif [ "$acnt" != 0 ];then
+		die "Too many arguments."
+		exit 1
+	fi
+	if [ ! -e .git ];then
+		ginit
+	fi
 	if opt -3; then
 		exec g3 "$@"
 	elif opt -2; then
