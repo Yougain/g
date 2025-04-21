@@ -1,8 +1,8 @@
-#!/bin/env bash
+#!/bin/bash
 #
 # test pull
 # retest commit
-
+#
 
 PATH="./:$PATH"
 
