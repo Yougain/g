@@ -15,14 +15,14 @@ if [ "${PWD%/*}" != "$HOME/git_project" ];then
 fi
 
 
-if [ -d /data/data/com.termux/files ];then
+if [ -d /data/data/com.termux/files -a ! -r / ];then
 	PATH=/data/data/com.termux/files/usr/share/bashlib_y:$PATH
 else
 	PATH=/usr/share/bashlib_y:$PATH
 fi
 
 
-if [ -d /data/data/com.termux/files ];then
+if [ -d /data/data/com.termux/files -a ! -r / ];then
 	R=/data/data/com.termux/files
 	SUDO=
 else
