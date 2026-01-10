@@ -462,12 +462,13 @@ function main(){
 	G_USER=`git config user.name`
 	G_EMAIL=`git config user.email`
 	ask_yes_no_color yellow magenta
+	local g
 	if [ -z "$G_USER" -o -z "$G_EMAIL" ];then
 		yellow "Missing user and/or email for git."
 		local g_user
 		local g_email
-		for g in `find ~/git_project -maxdepth 2 -type d -name .git`;do
-			if [ -e $g/config ];then
+		for g in ~/git_project/*; do
+			if [ -e $g/.git/config ];then
 				if [ -z "$G_USER" ];then
 					g_user=$( (cd $g/..; git config user.name) )
 					if [ -n "$g_user" ];then
