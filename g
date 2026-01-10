@@ -516,7 +516,7 @@ function main(){
 
 	if [[ `git remote -v` =~ https ]]; then
 		git remote set-url origin git@github.com:${G_USER}/`basename $(git rev-parse --show-toplevel)`.git
-		if ! ssh git@github.com; then
+		if ! [[ `ssh git@github.com 2>&1` =~ successfully ]]; then
 			die "Cannot connect to github by ssh. Please set up ssh keys."
 		fi
 	fi
