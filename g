@@ -438,7 +438,9 @@ function main(){
 		exit 1
 	fi
 	if [ ! -e .git ];then
-		ginit
+		if ! ginit; then
+			exit 1
+		fi
 	fi
 	if opt -3; then
 		exec g3 "$@"
@@ -509,6 +511,13 @@ function main(){
 		done
 		if [ -z "$G_USER" -o -z "$G_EMAIL" ];then
 			die "Missing user and/or email for git. Please set user by executing 'git config user.name USER_NAME\ngit user.email EMAIL'"
+		fi
+	fi
+
+	if [[ `git remote -v` =~ https ]]; then
+		git remote set-url origin git@github.com:${G_USER}/`basename $(git rev-parse --show-toplevel)`.git
+		if ! ssh git@github.com; then
+			die "Cannot connect to github by ssh. Please set up ssh keys."
 		fi
 	fi
 
