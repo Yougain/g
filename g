@@ -472,11 +472,11 @@ function main(){
 		for g in ~/git_project/*; do
 			if [ -e $g/.git/config ];then
 				if [ -z "$G_USER" ];then
-					g_user=$( (cd $g/..; git config user.name) )
+					g_user=$( (cd $g; git config user.name) )
 					if [ -n "$g_user" ];then
 						dbv $g_user
 						if [ -z "$G_EMAIL" ];then
-							g_email=$( (cd $g/..; git config user.email) )
+							g_email=$( (cd $g; git config user.email) )
 							if [ -n "$g_email" ] ;then
 								echo -e "Found '$cyan$g_user$white' and '$cyan$g_email$white' in '$cyan$g/config'$white."
 								if ask_yes_no "Use them?"; then
