@@ -293,7 +293,9 @@ function create_repo(){
 }
 
 function git_ls_reomote(){
+	dbv
 	if ! git ls-remote 2>/tmp/_g_.err > /tmp/_g_.res; then
+		dbv
 		if grep 'ERROR: Repository not found' /tmp/_g_.err; then
 			yellow "Remote repository not found." >&2
 			create_repo
@@ -310,7 +312,9 @@ function git_ls_reomote(){
 
 function get_default_remote_branch(){
 	local lns
+	dbv
 	git_ls_reomote 
+	dbv
 	local hid=`echo "$lns"|grep HEAD|awk '{print $1}'`
 	if [ -z "$hid" ];then
 		return
@@ -539,9 +543,10 @@ function main(){
 
 	dbv
 	if [ -z "$DRB" ];then
+		dbv
 		get_default_remote_branch
 	fi
-
+	dbv
 	CM="`do_git commit -a --dry-run`"
 	dbv $CM
 	if ! [[ $CM =~ Changes\ to\ be\ committed: ]]; then
